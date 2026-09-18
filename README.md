@@ -1,6 +1,27 @@
+<div align="center">
+
 # Pen ID
 
-基于深度学习的手写笔迹识别系统，通过 Triplet CNN 提取笔迹特征向量，实现 40 人闭集笔迹匹配与鉴定。
+基于深度学习的手写笔迹识别系统
+
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](./LICENSE)
+[![Flet](https://img.shields.io/badge/UI-Flet-00C8FF?style=flat-square)](https://flet.dev/)
+[![OpenCV](https://img.shields.io/badge/OpenCV-4.8+-5C3EE8?style=flat-square&logo=opencv&logoColor=white)](https://opencv.org/)
+
+[![Stars](https://img.shields.io/github/stars/Geekline-tech/PenID?style=flat-square)](https://github.com/Geekline-tech/PenID/stargazers)
+[![Forks](https://img.shields.io/github/forks/Geekline-tech/PenID?style=flat-square)](https://github.com/Geekline-tech/PenID/network/members)
+[![Issues](https://img.shields.io/github/issues/Geekline-tech/PenID?style=flat-square)](https://github.com/Geekline-tech/PenID/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/Geekline-tech/PenID?style=flat-square)](https://github.com/Geekline-tech/PenID/pulls)
+
+[English](./README.md) | 简体中文
+
+---
+
+通过 Triplet CNN 提取笔迹特征向量，实现 40 人闭集笔迹匹配与鉴定。
+
+</div>
 
 ## 功能
 
@@ -46,6 +67,7 @@ PenID/
 ├── main.py                      # UI 启动入口
 ├── train.py                     # 训练入口 (CLI)
 ├── requirements.txt
+├── LICENSE                      # MIT License
 └── docs/
     └── development_plan.md      # 开发文档
 ```
@@ -63,7 +85,13 @@ PenID/
 git clone https://github.com/Geekline-tech/PenID.git
 cd PenID
 python -m venv venv
-venv\Scripts\activate          # Windows
+
+# Windows
+venv\Scripts\activate
+
+# macOS / Linux
+source venv/bin/activate
+
 pip install -r requirements.txt
 ```
 
@@ -107,7 +135,7 @@ data/raw/
 
 - 每人文件夹以学号命名
 - 每人至少 2 张扫描图片 (建议 3-5 张以提升准确率)
-- 图片格式: JPG/PNG
+- 图片格式: JPG / PNG
 
 ## 模型架构
 
@@ -132,22 +160,19 @@ ResNet18 Backbone (ImageNet 预训练)
     → 返回Top-10匹配结果
 ```
 
-## License
-
-本项目提供以下开源协议供选择：
-
-| 协议 | 特点 | 适用场景 |
-|------|------|----------|
-| **MIT** | 最宽松，允许商用，只需保留版权声明 | 希望最大化传播和使用 |
-| **Apache 2.0** | 类似 MIT，额外提供专利授权保护 | 担心专利纠纷的商业项目 |
-| **GPL-3.0** | Copyleft，衍生作品必须开源 | 希望衍生项目也保持开源 |
-| **BSD-3-Clause** | 与 MIT 几乎等同，措辞略有不同 | 学术/研究项目 |
-
-**推荐：MIT License** — 本项目为教学研究性质，MIT 协议最简洁、传播最广，适合最大化开源影响力。
-
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request。
+欢迎提交 Issue 和 Pull Request！
+
+1. Fork 本仓库
+2. 创建特性分支 (`git checkout -b feature/amazing-feature`)
+3. 提交更改 (`git commit -m 'Add amazing feature'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 创建 Pull Request
+
+## License
+
+本项目采用 [MIT License](./LICENSE) 开源协议。
 
 ## 致谢
 
