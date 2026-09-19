@@ -17,6 +17,8 @@
 [![Issues](https://img.shields.io/github/issues/Geekline-tech/PenID?style=flat-square)](https://github.com/Geekline-tech/PenID/issues)
 [![PRs](https://img.shields.io/github/issues-pr/Geekline-tech/PenID?style=flat-square)](https://github.com/Geekline-tech/PenID/pulls)
 
+[English](./README_EN.md) | 简体中文
+
 </div>
 
 ---
