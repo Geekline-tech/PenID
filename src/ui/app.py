@@ -5,6 +5,14 @@ from PyQt5.QtWidgets import QApplication, QSizePolicy
 from qfluentwidgets import FluentWindow, setTheme, Theme, FluentIcon, FluentTranslator
 from src.inference.gallery import Gallery
 
+try:
+    from PyQt5.QtCore import PYQT_VERSION_STR
+    if PYQT_VERSION_STR.startswith("5"):
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+except Exception:
+    pass
+
 
 class ModelLoader(QThread):
     finished = pyqtSignal(bool, str)
@@ -38,6 +46,9 @@ class MainWindow(FluentWindow):
         self.train_page = TrainPage(self.gallery)
         self.gallery_page = GalleryPage(self.gallery)
 
+        self.navigationInterface.setExpandWidth(240)
+        self.navigationInterface.setMinimumWidth(240)
+
         self.addSubInterface(self.identify_page, FluentIcon.SEARCH, "识别")
         self.addSubInterface(self.train_page, FluentIcon.TRAIN, "训练")
         self.addSubInterface(self.gallery_page, FluentIcon.PEOPLE, "人员管理")
@@ -58,6 +69,7 @@ class MainWindow(FluentWindow):
 
 def main():
     app = QApplication(sys.argv)
+    app.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
     app.setFont(QFont("Microsoft YaHei UI", 10))
     FluentTranslator()
     setTheme(Theme.DARK)
