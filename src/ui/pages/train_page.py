@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPlainTextEdit
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPlainTextEdit
 )
 from qfluentwidgets import (
     PushButton, PrimaryPushButton, CardWidget, TitleLabel, BodyLabel,
