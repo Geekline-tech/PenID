@@ -5,12 +5,11 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFileDialog,
     QInputDialog, QMessageBox, QTableWidget, QTableWidgetItem,
-    QHeaderView, QAbstractItemView, QScrollArea, QFrame
+    QHeaderView, QAbstractItemView
 )
 from qfluentwidgets import (
     PushButton, PrimaryPushButton, CardWidget, SubtitleLabel, CaptionLabel,
-    FluentIcon, ProgressBar, InfoBar, StrongBodyLabel, TableWidget,
-    TitleLabel
+    FluentIcon, ProgressBar, InfoBar, TitleLabel
 )
 from src.utils.config import RAW_DIR, PATCHES_DIR
 from src.utils.database import Database
@@ -67,72 +66,69 @@ class GalleryPage(QWidget):
         self._refresh_table()
 
     def _init_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(32, 24, 32, 24)
+        root.setSpacing(20)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
+        title = TitleLabel("人员管理")
+        title.setStyleSheet("color: #cdd6f4; background: transparent;")
+        root.addWidget(title)
 
-        content = QWidget()
-        content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(32, 32, 32, 32)
-        content_layout.setSpacing(24)
-
-        header = StrongBodyLabel("人员管理")
-        header.setFont(QFont("Microsoft YaHei UI", 14))
-        header.setStyleSheet("color: #cdd6f4; background: transparent;")
-        content_layout.addWidget(header)
-
-        action_card = CardWidget()
-        ac_layout = QHBoxLayout(action_card)
-        ac_layout.setContentsMargins(24, 20, 24, 20)
-        ac_layout.setSpacing(16)
+        btn_card = CardWidget()
+        bcl = QHBoxLayout(btn_card)
+        bcl.setContentsMargins(20, 14, 20, 14)
+        bcl.setSpacing(12)
 
         self.add_btn = PushButton("添加人员")
         self.add_btn.setIcon(FluentIcon.ADD)
-        self.add_btn.setFixedHeight(44)
-        self.add_btn.setMinimumWidth(150)
+        self.add_btn.setFixedHeight(40)
         self.add_btn.setFont(QFont("Microsoft YaHei UI", 11))
         self.add_btn.clicked.connect(self._add_person)
 
         self.import_btn = PushButton("导入图片")
         self.import_btn.setIcon(FluentIcon.FOLDER)
-        self.import_btn.setFixedHeight(44)
-        self.import_btn.setMinimumWidth(150)
+        self.import_btn.setFixedHeight(40)
         self.import_btn.setFont(QFont("Microsoft YaHei UI", 11))
         self.import_btn.clicked.connect(self._import_images)
 
         self.delete_btn = PushButton("删除选中")
         self.delete_btn.setIcon(FluentIcon.DELETE)
-        self.delete_btn.setFixedHeight(44)
-        self.delete_btn.setMinimumWidth(150)
+        self.delete_btn.setFixedHeight(40)
         self.delete_btn.setFont(QFont("Microsoft YaHei UI", 11))
         self.delete_btn.clicked.connect(self._delete_person)
 
         self.rebuild_btn = PrimaryPushButton("重建特征库")
         self.rebuild_btn.setIcon(FluentIcon.SYNC)
-        self.rebuild_btn.setFixedHeight(44)
-        self.rebuild_btn.setMinimumWidth(170)
+        self.rebuild_btn.setFixedHeight(40)
         self.rebuild_btn.setFont(QFont("Microsoft YaHei UI", 11))
         self.rebuild_btn.clicked.connect(self._rebuild_gallery)
 
-        ac_layout.addWidget(self.add_btn)
-        ac_layout.addWidget(self.import_btn)
-        ac_layout.addWidget(self.delete_btn)
-        ac_layout.addWidget(self.rebuild_btn)
-        ac_layout.addStretch()
-
-        content_layout.addWidget(action_card)
+        bcl.addWidget(self.add_btn)
+        bcl.addWidget(self.import_btn)
+        bcl.addWidget(self.delete_btn)
+        bcl.addWidget(self.rebuild_btn)
+        bcl.addStretch()
+        root.addWidget(btn_card)
 
         self.progress = ProgressBar()
         self.progress.setVisible(False)
-        content_layout.addWidget(self.progress)
+        root.addWidget(self.progress)
 
         table_card = CardWidget()
-        tc_layout = QVBoxLayout(table_card)
-        tc_layout.setContentsMargins(24, 20, 24, 20)
+        tcl = QVBoxLayout(table_card)
+        tcl.setContentsMargins(20, 16, 20, 16)
+
+        header_row = QHBoxLayout()
+        header_row.setSpacing(8)
+        header_row.setContentsMargins(0, 0, 0, 8)
+        h = SubtitleLabel("人员列表")
+        h.setStyleSheet("color: #a6adc8; background: transparent;")
+        header_row.addWidget(h)
+        header_row.addStretch()
+        self.status_label = CaptionLabel("")
+        self.status_label.setStyleSheet("color: #6c7086; background: transparent;")
+        header_row.addWidget(self.status_label)
+        tcl.addLayout(header_row)
 
         self.table = QTableWidget()
         self.table.setColumnCount(4)
@@ -143,43 +139,34 @@ class GalleryPage(QWidget):
         self.table.verticalHeader().setVisible(False)
         self.table.setShowGrid(False)
         self.table.setAlternatingRowColors(True)
-        self.table.setRowCount(0)
         self.table.setMinimumHeight(400)
+        self.table.setFont(QFont("Microsoft YaHei UI", 12))
         self.table.setStyleSheet("""
             QTableWidget {
                 background: transparent;
-                alternate-background: rgba(255,255,255,0.03);
+                alternate-background: rgba(255,255,255,0.02);
                 color: #cdd6f4;
                 border: none;
-                font-size: 14px;
-                font-family: 'Microsoft YaHei UI';
             }
             QTableWidget::item {
-                padding: 10px 14px;
-                border-bottom: 1px solid #313244;
+                padding: 12px 8px;
+                border-bottom: 1px solid rgba(255,255,255,0.06);
             }
             QTableWidget::item:selected {
-                background: #45475a;
+                background: rgba(137,180,250,0.15);
             }
             QHeaderView::section {
                 background: transparent;
-                color: #a6adc8;
+                color: #9399b2;
                 border: none;
-                border-bottom: 2px solid #313244;
-                padding: 12px 14px;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+                padding: 10px 8px;
                 font-weight: bold;
-                font-size: 13px;
+                font-size: 12px;
             }
         """)
-        tc_layout.addWidget(self.table, 1)
-        content_layout.addWidget(table_card, 1)
-
-        self.status_label = CaptionLabel("")
-        self.status_label.setStyleSheet("color: #6c7086; background: transparent; font-size: 13px;")
-        content_layout.addWidget(self.status_label)
-
-        scroll.setWidget(content)
-        layout.addWidget(scroll)
+        tcl.addWidget(self.table, 1)
+        root.addWidget(table_card, 1)
 
     def _refresh_table(self):
         db = Database()
@@ -191,8 +178,7 @@ class GalleryPage(QWidget):
             self.table.setItem(i, 0, QTableWidgetItem(str(p["id"])))
             self.table.setItem(i, 1, QTableWidgetItem(p["name"]))
             self.table.setItem(i, 2, QTableWidgetItem(str(p["sample_count"])))
-            emb_status = "✓" if p["has_embedding"] else "✗"
-            self.table.setItem(i, 3, QTableWidgetItem(emb_status))
+            self.table.setItem(i, 3, QTableWidgetItem("Yes" if p["has_embedding"] else "No"))
 
         self.status_label.setText(f"共 {len(persons)} 人")
 
@@ -203,37 +189,31 @@ class GalleryPage(QWidget):
             db.add_person(name)
             db.close()
             self._refresh_table()
-            InfoBar.success("完成", f"已添加人员: {name}", parent=self.window())
+            InfoBar.success("完成", f"已添加: {name}", parent=self.window())
 
     def _delete_person(self):
         row = self.table.currentRow()
         if row < 0:
-            InfoBar.warning("提示", "请先选择一个人员", parent=self.window())
+            InfoBar.warning("提示", "请先选择人员", parent=self.window())
             return
         person_id = int(self.table.item(row, 0).text())
         name = self.table.item(row, 1).text()
-        reply = QMessageBox.question(
-            self, "确认删除", f"确定要删除人员 {name} 吗？",
-            QMessageBox.Yes | QMessageBox.No
-        )
+        reply = QMessageBox.question(self, "确认删除", f"删除 {name}?", QMessageBox.Yes | QMessageBox.No)
         if reply == QMessageBox.Yes:
             db = Database()
             db.delete_person(person_id)
             db.close()
-            person_dir = RAW_DIR / name
-            patches_dir = PATCHES_DIR / name
-            if person_dir.exists():
-                shutil.rmtree(person_dir)
-            if patches_dir.exists():
-                shutil.rmtree(patches_dir)
+            p = RAW_DIR / name
+            pp = PATCHES_DIR / name
+            if p.exists(): shutil.rmtree(p)
+            if pp.exists(): shutil.rmtree(pp)
             self.gallery._gallery_cache = None
             self._refresh_table()
-            InfoBar.success("完成", f"已删除人员: {name}", parent=self.window())
 
     def _import_images(self):
         row = self.table.currentRow()
         if row < 0:
-            InfoBar.warning("提示", "请先选择一个人员", parent=self.window())
+            InfoBar.warning("提示", "请先选择人员", parent=self.window())
             return
         name = self.table.item(row, 1).text()
         folder = QFileDialog.getExistingDirectory(self, f"选择 {name} 的图片文件夹")
@@ -250,7 +230,7 @@ class GalleryPage(QWidget):
         self.import_btn.setEnabled(True)
         self.progress.setVisible(False)
         self._refresh_table()
-        InfoBar.success("完成", "图片导入完成", parent=self.window())
+        InfoBar.success("完成", "导入完成", parent=self.window())
 
     def _rebuild_gallery(self):
         self.rebuild_btn.setEnabled(False)
@@ -265,4 +245,4 @@ class GalleryPage(QWidget):
         self.rebuild_btn.setEnabled(True)
         self.progress.setVisible(False)
         self._refresh_table()
-        InfoBar.success("完成", "特征库重建完成", parent=self.window())
+        InfoBar.success("完成", "重建完成", parent=self.window())
