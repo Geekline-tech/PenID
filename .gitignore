@@ -32,3 +32,6 @@ Desktop.ini
 # Logs
 *.log
 wandb/
+
+# Playwright
+.playwright-mcp/
