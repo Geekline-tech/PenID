@@ -1,11 +1,8 @@
 import sys
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QHBoxLayout, QWidget
-from qfluentwidgets import (
-    NavigationInterface, NavigationItemPosition, setTheme, Theme,
-    FluentIcon, FluentTranslator
-)
+from PyQt5.QtWidgets import QApplication, QSizePolicy
+from qfluentwidgets import FluentWindow, setTheme, Theme, FluentIcon, FluentTranslator
 from src.inference.gallery import Gallery
 
 
@@ -24,18 +21,14 @@ class ModelLoader(QThread):
             self.finished.emit(False, str(e))
 
 
-class MainWindow(QMainWindow):
+class MainWindow(FluentWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Pen ID")
-        self.resize(1100, 750)
-        self.setMinimumSize(900, 600)
-
-        setTheme(Theme.DARK)
+        self.resize(1280, 800)
+        self.setMinimumSize(960, 640)
 
         self.gallery = Gallery()
-
-        self.stack = QStackedWidget(self)
 
         from src.ui.pages.identify_page import IdentifyPage
         from src.ui.pages.train_page import TrainPage
@@ -45,24 +38,10 @@ class MainWindow(QMainWindow):
         self.train_page = TrainPage(self.gallery)
         self.gallery_page = GalleryPage(self.gallery)
 
-        self.stack.addWidget(self.identify_page)
-        self.stack.addWidget(self.train_page)
-        self.stack.addWidget(self.gallery_page)
+        self.addSubInterface(self.identify_page, FluentIcon.SEARCH, "识别")
+        self.addSubInterface(self.train_page, FluentIcon.TRAIN, "训练")
+        self.addSubInterface(self.gallery_page, FluentIcon.PEOPLE, "人员管理")
 
-        self.nav = NavigationInterface(self)
-        self.nav.addItem("identify", FluentIcon.SEARCH, "识别", onClick=lambda: self.stack.setCurrentIndex(0))
-        self.nav.addItem("train", FluentIcon.TRAIN, "训练", onClick=lambda: self.stack.setCurrentIndex(1))
-        self.nav.addItem("gallery", FluentIcon.PEOPLE, "人员管理", onClick=lambda: self.stack.setCurrentIndex(2))
-
-        central = QWidget()
-        self.setCentralWidget(central)
-        h_layout = QHBoxLayout(central)
-        h_layout.setContentsMargins(0, 0, 0, 0)
-        h_layout.setSpacing(0)
-        h_layout.addWidget(self.nav)
-        h_layout.addWidget(self.stack)
-
-        self.statusBar().showMessage("Loading model...")
         self._load_model()
 
     def _load_model(self):
@@ -72,15 +51,16 @@ class MainWindow(QMainWindow):
 
     def _on_model_loaded(self, ok, msg):
         if ok:
-            self.statusBar().showMessage("Model ready")
+            self.setWindowTitle("Pen ID - 模型已加载")
         else:
-            self.statusBar().showMessage(f"Model load failed: {msg}")
+            self.setWindowTitle(f"Pen ID - 加载失败: {msg}")
 
 
 def main():
     app = QApplication(sys.argv)
-    app.setFont(QFont("Segoe UI", 10))
+    app.setFont(QFont("Microsoft YaHei UI", 10))
     FluentTranslator()
+    setTheme(Theme.DARK)
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())

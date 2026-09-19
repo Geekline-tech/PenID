@@ -6,6 +6,8 @@
 
 Identifies writers from handwriting samples using Triplet CNN feature extraction and cosine distance matching.
 
+> **⚠️ Current Status: UI is being refactored with PyQt5 + Fluent Widgets. This version is unstable and features may change.**
+
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](./LICENSE)
@@ -26,7 +28,7 @@ Identifies writers from handwriting samples using Triplet CNN feature extraction
 ## Features
 
 - **Writer Identification** — Upload a handwriting image, get Top-10 ranked matches with confidence scores
-- **Scan Enhancement** — Built-in preprocessing pipeline for crease removal, lighting normalization, and perspective correction
+- **Scan Enhancement** — Built-in preprocessing pipeline for crease removal, lighting normalization
 - **Model Training** — Customizable Triplet CNN + Classification Head training with GPU acceleration
 - **Gallery Management** — Add / remove persons, rebuild the feature database with one click
 - **Multi-Patch Aggregation** — Automatically splits full-page images into patches and averages embeddings for more robust matching
@@ -38,8 +40,8 @@ Identifies writers from handwriting samples using Triplet CNN feature extraction
 | Deep Learning | PyTorch + ResNet18 | ImageNet pretrained backbone |
 | Feature Space | 512-d L2-normalized Embedding | Cosine distance matching |
 | Loss Function | Triplet Loss + CrossEntropy | Joint metric space + classification optimization |
-| Image Processing | OpenCV | Chinese path support, adaptive binarization |
-| UI Framework | PyQt5 + Fluent Widgets | WinUI 3 style, dark theme |
+| Image Processing | OpenCV | Chinese path support, background subtraction + CLAHE |
+| UI Framework | PyQt5 + PyQt-Fluent-Widgets | WinUI 3 style, dark theme, sidebar navigation |
 | Database | SQLite | Zero-config, stores person info and embeddings |
 
 ## Quick Start
@@ -80,11 +82,11 @@ python train.py --epochs 60 --batch-size 32 --lr 1e-4 --embed-dim 512
 
 | Argument | Default | Description |
 |----------|---------|-------------|
-| `--epochs` | 100 | Training epochs |
-| `--batch-size` | 64 | Batch size |
+| `--epochs` | 60 | Training epochs |
+| `--batch-size` | 32 | Batch size |
 | `--lr` | 1e-4 | Learning rate |
 | `--margin` | 0.3 | Triplet Loss margin |
-| `--embed-dim` | 256 | Embedding dimension |
+| `--embed-dim` | 512 | Embedding dimension |
 | `--device` | auto | Device (auto / cuda / cpu) |
 
 ## Model Architecture
@@ -111,7 +113,9 @@ L2 Normalize → 512-d Embedding
 
 ```
 Input scan
-  → Adaptive binarization (Otsu)
+  → Background subtraction (large Gaussian kernel)
+  → CLAHE contrast enhancement
+  → Light denoising
   → Horizontal projection line segmentation
   → Line → Patch splitting (64×384)
   → ResNet18 extracts 512-d feature per patch
@@ -129,7 +133,7 @@ PenID/
 │   │   ├── preprocess.py       # Line segmentation, patch splitting
 │   │   ├── dataset.py          # Triplet Dataset
 │   │   ├── augmentation.py     # Train / inference augmentation
-│   │   └── scanner.py          # Scan enhancement (crease removal)
+│   │   └── scanner.py          # Scan enhancement (background subtraction + CLAHE)
 │   ├── models/
 │   │   ├── pennet.py           # PenNet (ResNet18 + Embedding)
 │   │   └── losses.py           # Triplet + CE Loss
@@ -139,11 +143,15 @@ PenID/
 │   │   ├── matcher.py          # Embedder
 │   │   └── gallery.py          # Gallery matching
 │   ├── ui/
-│   │   └── flet_app.py         # Flet UI
+│   │   ├── app.py              # Main window (FluentWindow)
+│   │   └── pages/
+│   │       ├── identify_page.py  # Identification page
+│   │       ├── train_page.py     # Training page
+│   │       └── gallery_page.py   # Gallery management page
 │   └── utils/
 │       ├── config.py           # Global config
 │       └── database.py         # SQLite
-├── main.py                     # UI entry
+├── main.py                     # Entry point
 ├── train.py                    # CLI training entry
 ├── requirements.txt
 ├── LICENSE                     # MIT
@@ -173,5 +181,5 @@ git push origin feature/amazing-feature
 ## Acknowledgments
 
 - [PyTorch](https://pytorch.org/) - Deep learning framework
-- [Flet](https://flet.dev/) - Cross-platform UI framework
+- [PyQt-Fluent-Widgets](https://github.com/ChinaIceF/PyQt-Fluent-Widgets) - WinUI 3 style UI components
 - [OpenCV](https://opencv.org/) - Computer vision library

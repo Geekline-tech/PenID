@@ -3,16 +3,19 @@ import numpy as np
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QPixmap, QImage, QFont
 from PyQt5.QtWidgets import (
-    QWidget, QHBoxLayout, QVBoxLayout, QLabel, QFileDialog, QScrollArea, QFrame
+    QWidget, QHBoxLayout, QVBoxLayout, QLabel,
+    QScrollArea, QFrame, QSizePolicy, QFileDialog
 )
 from qfluentwidgets import (
-    PushButton, PrimaryPushButton, CardWidget, TitleLabel, BodyLabel,
-    CaptionLabel, FluentIcon, ProgressBar
+    PushButton, PrimaryPushButton, CardWidget, SubtitleLabel,
+    BodyLabel, CaptionLabel, FluentIcon, ProgressBar, InfoBar,
 )
 from src.data.scanner import scan_document
 
 
-def ndarray_to_pixmap(img, max_w=480, max_h=300):
+def ndarray_to_pixmap(img, max_w=600, max_h=500):
+    if img is None:
+        return QPixmap()
     if len(img.shape) == 2:
         h, w = img.shape
         qimg = QImage(img.data, w, h, w, QImage.Format_Grayscale8)
@@ -20,8 +23,21 @@ def ndarray_to_pixmap(img, max_w=480, max_h=300):
         h, w, ch = img.shape
         bgr = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         qimg = QImage(bgr.data, w, h, w * ch, QImage.Format_RGB888)
-    pix = QPixmap.fromImage(qimg)
+    pix = QPixmap.fromImage(qimg.copy())
     return pix.scaled(max_w, max_h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+
+class ScanWorker(QThread):
+    done = pyqtSignal(object, object)
+
+    def __init__(self, color_img):
+        super().__init__()
+        self.color_img = color_img
+
+    def run(self):
+        raw_gray = cv2.cvtColor(self.color_img, cv2.COLOR_BGR2GRAY) if len(self.color_img.shape) == 3 else self.color_img.copy()
+        scanned = scan_document(self.color_img)
+        self.done.emit(raw_gray, scanned)
 
 
 class IdentifyWorker(QThread):
@@ -44,219 +60,265 @@ class IdentifyWorker(QThread):
 class RankingWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(6)
+        self.v_layout = QVBoxLayout(self)
+        self.v_layout.setContentsMargins(0, 0, 0, 0)
+        self.v_layout.setSpacing(6)
 
     def set_results(self, results):
-        while self.layout.count():
-            item = self.layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
+        self.clear()
         for i, r in enumerate(results[:10]):
-            row = QFrame()
-            row.setStyleSheet("QFrame { background: #2b2d30; border-radius: 6px; padding: 6px; }")
-            row_layout = QHBoxLayout(row)
-            row_layout.setContentsMargins(10, 6, 10, 6)
-
             color = "#a6e3a1" if i == 0 else "#89b4fa" if i < 3 else "#6c7086"
 
+            row = QFrame()
+            row.setStyleSheet(
+                "QFrame { background-color: #313244; border-radius: 8px; padding: 4px; }"
+                "QFrame:hover { background-color: #45475a; }"
+            )
+            row.setFixedHeight(52)
+            row_layout = QHBoxLayout(row)
+            row_layout.setContentsMargins(16, 6, 16, 6)
+            row_layout.setSpacing(14)
+
             rank = QLabel(f"#{i+1}")
-            rank.setFixedWidth(30)
-            rank.setFont(QFont("Segoe UI", 10, QFont.Bold))
-            rank.setStyleSheet(f"color: {color};")
+            rank.setFixedWidth(36)
+            rank.setFont(QFont("Microsoft YaHei UI", 13, QFont.Bold))
+            rank.setStyleSheet(f"color: {color}; background: transparent;")
             row_layout.addWidget(rank)
 
             name = QLabel(r["name"])
-            name.setFont(QFont("Segoe UI", 11, QFont.Bold))
-            name.setStyleSheet("color: #cdd6f4;")
-            name.setFixedWidth(100)
+            name.setFont(QFont("Microsoft YaHei UI", 13, QFont.Bold))
+            name.setStyleSheet("color: #cdd6f4; background: transparent;")
+            name.setFixedWidth(140)
             row_layout.addWidget(name)
 
-            bar_bg = QFrame()
-            bar_bg.setFixedHeight(8)
-            bar_bg.setStyleSheet("background: #45475a; border-radius: 4px;")
-            bar_bg_layout = QVBoxLayout(bar_bg)
-            bar_bg_layout.setContentsMargins(0, 0, 0, 0)
-            bar_fill = QLabel()
+            bar_outer = QLabel()
+            bar_outer.setStyleSheet("background: #45475a; border-radius: 4px;")
+            bar_outer.setFixedHeight(8)
             pct = r["confidence"] * 100
-            bar_fill.setStyleSheet(f"background: {color}; border-radius: 4px;")
-            bar_fill.setFixedHeight(8)
-            bar_fill.setFixedWidth(max(1, int(pct * 2)))
-            bar_bg_layout.addWidget(bar_fill, alignment=Qt.AlignLeft)
-            row_layout.addWidget(bar_bg, 1)
+            row_layout.addWidget(bar_outer, 1)
 
             conf = QLabel(f"{pct:.1f}%")
-            conf.setFixedWidth(50)
-            conf.setAlignment(Qt.AlignRight)
-            conf.setStyleSheet(f"color: {color};")
+            conf.setFixedWidth(60)
+            conf.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            conf.setFont(QFont("Microsoft YaHei UI", 12))
+            conf.setStyleSheet(f"color: {color}; background: transparent;")
             row_layout.addWidget(conf)
 
-            dist = QLabel(f"d={r['distance']:.3f}")
-            dist.setFixedWidth(60)
-            dist.setStyleSheet("color: #6c7086;")
+            dist = QLabel(f"{r['distance']:.3f}")
+            dist.setFixedWidth(70)
+            dist.setStyleSheet("color: #6c7086; background: transparent;")
+            dist.setFont(QFont("Microsoft YaHei UI", 10))
             row_layout.addWidget(dist)
 
-            self.layout.addWidget(row)
+            self.v_layout.addWidget(row)
 
     def clear(self):
-        while self.layout.count():
-            item = self.layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+        while self.v_layout.count():
+            item = self.v_layout.takeAt(0)
+            w = item.widget()
+            if w:
+                w.deleteLater()
 
 
 class IdentifyPage(QWidget):
     def __init__(self, gallery):
         super().__init__()
+        self.setObjectName("identify_page")
         self.gallery = gallery
         self.current_image = None
         self.worker = None
         self._init_ui()
 
     def _init_ui(self):
-        main_layout = QHBoxLayout(self)
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(20)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(28, 28, 28, 28)
+        layout.setSpacing(28)
 
-        left = QVBoxLayout()
-        left.setSpacing(12)
-
-        title = TitleLabel("笔迹识别")
-        left.addWidget(title)
+        left_col = QVBoxLayout()
+        left_col.setSpacing(18)
 
         self.image_card = CardWidget()
-        self.image_card.setMinimumHeight(320)
-        image_layout = QVBoxLayout(self.image_card)
-        self.image_label = QLabel("点击下方按钮上传笔迹图片")
+        self.image_card.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        card_layout = QVBoxLayout(self.image_card)
+        card_layout.setContentsMargins(20, 20, 20, 20)
+
+        self.placeholder = QLabel("点击下方按钮上传笔迹图片")
+        self.placeholder.setAlignment(Qt.AlignCenter)
+        self.placeholder.setStyleSheet("color: #585b70; font-size: 18px; background: transparent;")
+        self.placeholder.setFont(QFont("Microsoft YaHei UI", 16))
+        card_layout.addWidget(self.placeholder)
+
+        self.image_label = QLabel()
         self.image_label.setAlignment(Qt.AlignCenter)
-        self.image_label.setStyleSheet("color: #6c7086; font-size: 14px;")
-        self.image_label.setMinimumHeight(300)
-        image_layout.addWidget(self.image_label)
-        left.addWidget(self.image_card)
+        self.image_label.setStyleSheet("background: transparent;")
+        self.image_label.setVisible(False)
+        card_layout.addWidget(self.image_label)
+
+        left_col.addWidget(self.image_card, 1)
 
         btn_row = QHBoxLayout()
-        self.upload_btn = PushButton()
-        self.upload_btn.setText("上传图片")
+        btn_row.setSpacing(14)
+
+        self.upload_btn = PrimaryPushButton("上传图片")
         self.upload_btn.setIcon(FluentIcon.FOLDER)
+        self.upload_btn.setFixedHeight(44)
+        self.upload_btn.setMinimumWidth(160)
+        self.upload_btn.setFont(QFont("Microsoft YaHei UI", 11))
         self.upload_btn.clicked.connect(self._upload)
-        self.scan_btn = PushButton()
-        self.scan_btn.setText("扫描增强")
+
+        self.scan_btn = PushButton("扫描增强")
         self.scan_btn.setIcon(FluentIcon.CAMERA)
+        self.scan_btn.setFixedHeight(44)
+        self.scan_btn.setMinimumWidth(160)
+        self.scan_btn.setFont(QFont("Microsoft YaHei UI", 11))
         self.scan_btn.clicked.connect(self._scan)
+
         btn_row.addWidget(self.upload_btn)
         btn_row.addWidget(self.scan_btn)
         btn_row.addStretch()
-        left.addLayout(btn_row)
+        left_col.addLayout(btn_row)
 
-        main_layout.addLayout(left, 6)
+        layout.addLayout(left_col, 6)
 
-        right = QVBoxLayout()
-        right.setSpacing(12)
+        right_col = QVBoxLayout()
+        right_col.setSpacing(18)
 
-        right.addWidget(TitleLabel("识别结果"))
+        result_card = CardWidget()
+        rc_layout = QVBoxLayout(result_card)
+        rc_layout.setContentsMargins(24, 24, 24, 24)
+        rc_layout.setSpacing(8)
 
-        self.result_card = CardWidget()
-        rc_layout = QVBoxLayout(self.result_card)
-        rc_layout.setContentsMargins(16, 16, 16, 16)
-        rc_layout.setSpacing(6)
-
-        self.result_name = TitleLabel("--")
-        self.result_name.setStyleSheet("color: #89b4fa;")
+        self.result_name = SubtitleLabel("识别结果")
+        self.result_name.setStyleSheet("color: #89b4fa; font-size: 20px;")
         rc_layout.addWidget(self.result_name)
 
         self.result_conf = BodyLabel("置信度: --")
-        self.result_conf.setStyleSheet("color: #a6adc8;")
+        self.result_conf.setStyleSheet("color: #a6adc8; font-size: 14px;")
         rc_layout.addWidget(self.result_conf)
 
-        self.result_status = CaptionLabel("")
+        self.result_status = BodyLabel("")
         rc_layout.addWidget(self.result_status)
 
         self.detail_text = CaptionLabel("")
         self.detail_text.setStyleSheet("color: #6c7086;")
         rc_layout.addWidget(self.detail_text)
 
-        right.addWidget(self.result_card)
+        right_col.addWidget(result_card)
 
-        self.identify_btn = PrimaryPushButton()
-        self.identify_btn.setText("开始识别")
+        self.identify_btn = PrimaryPushButton("开始识别")
         self.identify_btn.setIcon(FluentIcon.SEARCH)
+        self.identify_btn.setFixedHeight(48)
+        self.identify_btn.setFont(QFont("Microsoft YaHei UI", 12, QFont.Bold))
         self.identify_btn.setEnabled(False)
         self.identify_btn.clicked.connect(self._identify)
-        right.addWidget(self.identify_btn)
+        right_col.addWidget(self.identify_btn)
 
         self.progress = ProgressBar()
         self.progress.setVisible(False)
-        right.addWidget(self.progress)
+        right_col.addWidget(self.progress)
 
+        self.result_card_container = CardWidget()
+        rc2 = QVBoxLayout(self.result_card_container)
+        rc2.setContentsMargins(16, 16, 16, 16)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
         self.ranking = RankingWidget()
         scroll.setWidget(self.ranking)
-        right.addWidget(scroll, 1)
+        rc2.addWidget(scroll)
+        right_col.addWidget(self.result_card_container, 1)
 
-        main_layout.addLayout(right, 4)
+        layout.addLayout(right_col, 4)
 
     def _upload(self):
-        path, _ = QFileDialog.getOpenFileName(
+        f = QFileDialog.getOpenFileName(
             self, "选择笔迹图片", "", "Images (*.png *.jpg *.jpeg *.bmp)"
         )
-        if path:
-            data = np.fromfile(path, dtype=np.uint8)
-            img = cv2.imdecode(data, cv2.IMREAD_GRAYSCALE)
-            if img is not None:
-                self.current_image = img
-                self.image_label.setPixmap(ndarray_to_pixmap(img))
-                self.identify_btn.setEnabled(True)
+        if f and f[0]:
+            self._load_image(f[0])
 
     def _scan(self):
-        path, _ = QFileDialog.getOpenFileName(
+        f = QFileDialog.getOpenFileName(
             self, "选择笔迹图片", "", "Images (*.png *.jpg *.jpeg *.bmp)"
         )
-        if path:
+        if f and f[0]:
+            path = f[0]
             data = np.fromfile(path, dtype=np.uint8)
-            img = cv2.imdecode(data, cv2.IMREAD_COLOR)
-            if img is not None:
-                def run():
-                    scanned = scan_document(img)
-                    self.current_image = scanned
-                    raw = cv2.imdecode(data, cv2.IMREAD_GRAYSCALE)
-                    self._show_scanned(raw, scanned)
-                    self.identify_btn.setEnabled(True)
-                from threading import Thread
-                Thread(target=run, daemon=True).start()
+            color_img = cv2.imdecode(data, cv2.IMREAD_COLOR)
+            if color_img is None:
+                InfoBar.error("错误", "无法读取图片", parent=self.window())
+                return
 
-    def _show_scanned(self, raw, scanned):
-        raw_pix = ndarray_to_pixmap(raw, 230, 280)
-        scan_pix = ndarray_to_pixmap(scanned, 230, 280)
+            self.scan_btn.setEnabled(False)
+            self.progress.setVisible(True)
+            self.progress.setRange(0, 0)
+
+            self._scan_worker = ScanWorker(color_img)
+            self._scan_worker.done.connect(self._on_scan_done)
+            self._scan_worker.start()
+
+    def _on_scan_done(self, raw_gray, scanned):
+        self.scan_btn.setEnabled(True)
+        self.progress.setVisible(False)
+        self.progress.setRange(0, 100)
+
+        self.current_image = scanned
+        self.identify_btn.setEnabled(True)
+
+        self.placeholder.setVisible(False)
+        self.image_label.setVisible(True)
+
+        raw_pix = ndarray_to_pixmap(raw_gray, 340, 380)
+        scan_pix = ndarray_to_pixmap(scanned, 340, 380)
+
         container = QWidget()
-        layout = QHBoxLayout(container)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
-        left_col = QVBoxLayout()
-        left_col.addWidget(QLabel("原图"), alignment=Qt.AlignCenter)
-        raw_lbl = QLabel()
-        raw_lbl.setPixmap(raw_pix)
-        raw_lbl.setAlignment(Qt.AlignCenter)
-        left_col.addWidget(raw_lbl)
-        right_col = QVBoxLayout()
-        right_col.addWidget(QLabel("扫描结果"), alignment=Qt.AlignCenter)
-        scan_lbl = QLabel()
-        scan_lbl.setPixmap(scan_pix)
-        scan_lbl.setAlignment(Qt.AlignCenter)
-        right_col.addWidget(scan_lbl)
-        layout.addLayout(left_col)
-        layout.addLayout(right_col)
-        self.image_label.hide()
-        self.image_card.layout().addWidget(container)
+        container.setStyleSheet("background: transparent;")
+        c_layout = QHBoxLayout(container)
+        c_layout.setContentsMargins(0, 0, 0, 0)
+        c_layout.setSpacing(20)
+
+        for text, pix in [("原图", raw_pix), ("扫描增强", scan_pix)]:
+            col = QVBoxLayout()
+            col.setSpacing(10)
+            lbl = QLabel(text)
+            lbl.setAlignment(Qt.AlignCenter)
+            lbl.setFont(QFont("Microsoft YaHei UI", 13, QFont.Bold))
+            lbl.setStyleSheet("color: #a6adc8; background: transparent;")
+            col.addWidget(lbl)
+            img_lbl = QLabel()
+            img_lbl.setPixmap(pix)
+            img_lbl.setAlignment(Qt.AlignCenter)
+            img_lbl.setStyleSheet("background: transparent;")
+            col.addWidget(img_lbl)
+            c_layout.addLayout(col)
+
+        old_widget = self.image_label.parentWidget().findChild(QWidget, "")
+        self.image_label.setVisible(False)
+
+        parent_layout = self.image_card.layout()
+        parent_layout.addWidget(container)
+
+        InfoBar.success("完成", "扫描增强完成，已准备识别", parent=self.window())
+
+    def _load_image(self, path):
+        data = np.fromfile(path, dtype=np.uint8)
+        img = cv2.imdecode(data, cv2.IMREAD_GRAYSCALE)
+        if img is None:
+            InfoBar.error("错误", "无法读取图片", parent=self.window())
+            return
+        self.current_image = img
+        self.placeholder.setVisible(False)
+        self.image_label.setVisible(True)
+        pix = ndarray_to_pixmap(img)
+        self.image_label.setPixmap(pix)
+        self.identify_btn.setEnabled(True)
 
     def _identify(self):
         if self.current_image is None:
             return
         self.identify_btn.setEnabled(False)
         self.progress.setVisible(True)
+        self.progress.setRange(0, 0)
         self.result_name.setText("识别中...")
         self.result_conf.setText("")
         self.result_status.setText("")
@@ -273,10 +335,10 @@ class IdentifyPage(QWidget):
         self.result_conf.setText(f"置信度: {result['confidence']*100:.1f}%")
         if result["matched"]:
             self.result_status.setText("匹配成功")
-            self.result_status.setStyleSheet("color: #a6e3a1; font-weight: bold;")
+            self.result_status.setStyleSheet("color: #a6e3a1; font-weight: bold; font-size: 14px;")
         else:
             self.result_status.setText("无法匹配")
-            self.result_status.setStyleSheet("color: #f38ba8; font-weight: bold;")
+            self.result_status.setStyleSheet("color: #f38ba8; font-weight: bold; font-size: 14px;")
         self.detail_text.setText(f"余弦距离: {result['distance']:.4f}")
         self.ranking.set_results(result["rankings"])
         self.identify_btn.setEnabled(True)
