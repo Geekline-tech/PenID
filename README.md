@@ -9,7 +9,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](./LICENSE)
-[![Flet](https://img.shields.io/badge/UI-Flet-00C8FF?style=flat-square)](https://flet.dev/)
+[![PyQt5](https://img.shields.io/badge/UI-PyQt5%20Fluent-41CD52?style=flat-square&logo=qt&logoColor=white)](https://github.com/ChinaIceF/PyQt-Fluent-Widgets)
 [![OpenCV](https://img.shields.io/badge/OpenCV-4.8+-5C3EE8?style=flat-square&logo=opencv&logoColor=white)](https://opencv.org/)
 <br>
 [![Stars](https://img.shields.io/github/stars/Geekline-tech/PenID?style=flat-square)](https://github.com/Geekline-tech/PenID/stargazers)
@@ -72,7 +72,7 @@
 | 特征空间 | 512-d L2 归一化 Embedding | 余弦距离匹配 |
 | 损失函数 | Triplet Loss + CE | 联合优化度量空间与分类边界 |
 | 图像处理 | OpenCV | 中文路径兼容，自适应二值化 |
-| UI 框架 | Flet | Material Design 3，跨平台 |
+| UI 框架 | PyQt5 + Fluent Widgets | WinUI 3 风格，深色主题 |
 | 数据库 | SQLite | 零配置，存储人员信息与特征向量 |
 
 ## 快速开始

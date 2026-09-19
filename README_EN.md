@@ -9,7 +9,7 @@ Identifies writers from handwriting samples using Triplet CNN feature extraction
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](./LICENSE)
-[![Flet](https://img.shields.io/badge/UI-Flet-00C8FF?style=flat-square)](https://flet.dev/)
+[![PyQt5](https://img.shields.io/badge/UI-PyQt5%20Fluent-41CD52?style=flat-square&logo=qt&logoColor=white)](https://github.com/ChinaIceF/PyQt-Fluent-Widgets)
 [![OpenCV](https://img.shields.io/badge/OpenCV-4.8+-5C3EE8?style=flat-square&logo=opencv&logoColor=white)](https://opencv.org/)
 <br>
 [![Stars](https://img.shields.io/github/stars/Geekline-tech/PenID?style=flat-square)](https://github.com/Geekline-tech/PenID/stargazers)
@@ -39,7 +39,7 @@ Identifies writers from handwriting samples using Triplet CNN feature extraction
 | Feature Space | 512-d L2-normalized Embedding | Cosine distance matching |
 | Loss Function | Triplet Loss + CrossEntropy | Joint metric space + classification optimization |
 | Image Processing | OpenCV | Chinese path support, adaptive binarization |
-| UI Framework | Flet | Material Design 3, cross-platform |
+| UI Framework | PyQt5 + Fluent Widgets | WinUI 3 style, dark theme |
 | Database | SQLite | Zero-config, stores person info and embeddings |
 
 ## Quick Start
