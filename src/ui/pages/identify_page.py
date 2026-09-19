@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QPixmap, QImage, QFont, QColor
+from PyQt5.QtGui import QPixmap, QImage, QFont
 from PyQt5.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QLabel, QFileDialog, QScrollArea, QFrame
 )
@@ -60,10 +60,11 @@ class RankingWidget(QWidget):
             row_layout = QHBoxLayout(row)
             row_layout.setContentsMargins(10, 6, 10, 6)
 
+            color = "#a6e3a1" if i == 0 else "#89b4fa" if i < 3 else "#6c7086"
+
             rank = QLabel(f"#{i+1}")
             rank.setFixedWidth(30)
             rank.setFont(QFont("Segoe UI", 10, QFont.Bold))
-            color = "#a6e3a1" if i == 0 else "#89b4fa" if i < 3 else "#6c7086"
             rank.setStyleSheet(f"color: {color};")
             row_layout.addWidget(rank)
 
@@ -78,21 +79,18 @@ class RankingWidget(QWidget):
             bar_bg.setStyleSheet("background: #45475a; border-radius: 4px;")
             bar_bg_layout = QVBoxLayout(bar_bg)
             bar_bg_layout.setContentsMargins(0, 0, 0, 0)
-
             bar_fill = QLabel()
             pct = r["confidence"] * 100
-            bar_color = "#a6e3a1" if r["distance"] < 0.6 else "#89b4fa" if r["distance"] < 0.8 else "#6c7086"
-            bar_fill.setStyleSheet(f"background: {bar_color}; border-radius: 4px;")
+            bar_fill.setStyleSheet(f"background: {color}; border-radius: 4px;")
             bar_fill.setFixedHeight(8)
-            bar_fill.setFixedWidth(int(pct * 2))
+            bar_fill.setFixedWidth(max(1, int(pct * 2)))
             bar_bg_layout.addWidget(bar_fill, alignment=Qt.AlignLeft)
-
             row_layout.addWidget(bar_bg, 1)
 
             conf = QLabel(f"{pct:.1f}%")
             conf.setFixedWidth(50)
             conf.setAlignment(Qt.AlignRight)
-            conf.setStyleSheet(f"color: {bar_color};")
+            conf.setStyleSheet(f"color: {color};")
             row_layout.addWidget(conf)
 
             dist = QLabel(f"d={r['distance']:.3f}")
@@ -139,9 +137,13 @@ class IdentifyPage(QWidget):
         left.addWidget(self.image_card)
 
         btn_row = QHBoxLayout()
-        self.upload_btn = PushButton("上传图片", FluentIcon.UP)
+        self.upload_btn = PushButton()
+        self.upload_btn.setText("上传图片")
+        self.upload_btn.setIcon(FluentIcon.FOLDER)
         self.upload_btn.clicked.connect(self._upload)
-        self.scan_btn = PushButton("扫描增强", FluentIcon.CAMERA)
+        self.scan_btn = PushButton()
+        self.scan_btn.setText("扫描增强")
+        self.scan_btn.setIcon(FluentIcon.CAMERA)
         self.scan_btn.clicked.connect(self._scan)
         btn_row.addWidget(self.upload_btn)
         btn_row.addWidget(self.scan_btn)
@@ -177,7 +179,9 @@ class IdentifyPage(QWidget):
 
         right.addWidget(self.result_card)
 
-        self.identify_btn = PrimaryPushButton("开始识别", FluentIcon.SEARCH)
+        self.identify_btn = PrimaryPushButton()
+        self.identify_btn.setText("开始识别")
+        self.identify_btn.setIcon(FluentIcon.SEARCH)
         self.identify_btn.setEnabled(False)
         self.identify_btn.clicked.connect(self._identify)
         right.addWidget(self.identify_btn)

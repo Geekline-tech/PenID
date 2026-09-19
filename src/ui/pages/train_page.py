@@ -1,14 +1,13 @@
-import sys
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QPlainTextEdit
+    QWidget, QVBoxLayout, QHBoxLayout, QPlainTextEdit
 )
 from qfluentwidgets import (
     PushButton, PrimaryPushButton, CardWidget, TitleLabel, BodyLabel,
     CaptionLabel, FluentIcon, ProgressBar, LineEdit
 )
-from src.utils.config import Config, PATCHES_DIR
+from src.utils.config import Config
 from src.utils.database import Database
 
 
@@ -20,7 +19,6 @@ class TrainWorker(QThread):
         super().__init__()
         self.config = config
         self.gallery = gallery
-        self._stop = False
 
     def run(self):
         try:
@@ -95,20 +93,12 @@ class TrainPage(QWidget):
         inputs_layout.addStretch()
         param_layout.addLayout(inputs_layout)
 
-        info_layout = QHBoxLayout()
-        for text in [
-            "Triplet Loss: 正负样本对距离间隔",
-            "Batch Size: 影响显存占用",
-            "Embedding: 512维表达力更强",
-        ]:
-            info_layout.addWidget(CaptionLabel(text))
-        info_layout.addStretch()
-        param_layout.addLayout(info_layout)
-
         layout.addWidget(param_card)
 
         btn_row = QHBoxLayout()
-        self.train_btn = PrimaryPushButton("开始训练", FluentIcon.PLAY)
+        self.train_btn = PrimaryPushButton()
+        self.train_btn.setText("开始训练")
+        self.train_btn.setIcon(FluentIcon.PLAY)
         self.train_btn.clicked.connect(self._start_training)
         btn_row.addWidget(self.train_btn)
         btn_row.addStretch()

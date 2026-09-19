@@ -1,13 +1,12 @@
 import sys
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QHBoxLayout, QWidget
 from qfluentwidgets import (
     NavigationInterface, NavigationItemPosition, setTheme, Theme,
     FluentIcon, FluentTranslator
 )
 from src.inference.gallery import Gallery
-from src.utils.config import Config
 
 
 class ModelLoader(QThread):
@@ -36,7 +35,6 @@ class MainWindow(QMainWindow):
 
         self.gallery = Gallery()
 
-        self.nav = NavigationInterface(self, showCancelButton=True)
         self.stack = QStackedWidget(self)
 
         from src.ui.pages.identify_page import IdentifyPage
@@ -51,30 +49,21 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.train_page)
         self.stack.addWidget(self.gallery_page)
 
-        self.nav.addItem("identify", FluentIcon.SEARCH, "识别")
-        self.nav.addItem("train", FluentIcon.TRAIN, "训练")
-        self.nav.addItem("gallery", FluentIcon.PEOPLE, "人员管理")
+        self.nav = NavigationInterface(self)
+        self.nav.addItem("identify", FluentIcon.SEARCH, "识别", onClick=lambda: self.stack.setCurrentIndex(0))
+        self.nav.addItem("train", FluentIcon.TRAIN, "训练", onClick=lambda: self.stack.setCurrentIndex(1))
+        self.nav.addItem("gallery", FluentIcon.PEOPLE, "人员管理", onClick=lambda: self.stack.setCurrentIndex(2))
 
-        self.nav.setCurrentItem("identify")
-        self.nav.clicked.connect(self._on_nav_clicked)
-
-        self.setCentralWidget(self.stack)
-        self.hBoxLayout = __import__("PyQt5.QtWidgets", fromlist=["QHBoxLayout"]).QHBoxLayout(self)
-        self.hBoxLayout.setContentsMargins(0, 0, 0, 0)
-        self.hBoxLayout.addWidget(self.nav)
-        self.hBoxLayout.addWidget(self.stack)
+        central = QWidget()
+        self.setCentralWidget(central)
+        h_layout = QHBoxLayout(central)
+        h_layout.setContentsMargins(0, 0, 0, 0)
+        h_layout.setSpacing(0)
+        h_layout.addWidget(self.nav)
+        h_layout.addWidget(self.stack)
 
         self.statusBar().showMessage("Loading model...")
         self._load_model()
-
-    def _on_nav_clicked(self, key):
-        page_map = {
-            "identify": 0,
-            "train": 1,
-            "gallery": 2,
-        }
-        if key in page_map:
-            self.stack.setCurrentIndex(page_map[key])
 
     def _load_model(self):
         self.loader = ModelLoader(self.gallery)

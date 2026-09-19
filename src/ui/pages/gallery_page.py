@@ -1,20 +1,18 @@
-import cv2
-import numpy as np
+import shutil
 from pathlib import Path
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
+    QWidget, QVBoxLayout, QHBoxLayout, QFileDialog,
     QInputDialog, QMessageBox, QTableWidget, QTableWidgetItem,
     QHeaderView, QAbstractItemView
 )
 from qfluentwidgets import (
-    PushButton, PrimaryPushButton, CardWidget, TitleLabel,
-    CaptionLabel, FluentIcon, ProgressBar
+    PushButton, PrimaryPushButton, TitleLabel, CaptionLabel,
+    FluentIcon, ProgressBar
 )
-from src.utils.config import Config, RAW_DIR, PATCHES_DIR
+from src.utils.config import RAW_DIR, PATCHES_DIR
 from src.utils.database import Database
-from src.data.preprocess import prepare_person_data
 
 
 class BuildGalleryWorker(QThread):
@@ -51,7 +49,6 @@ class ImportWorker(QThread):
             person_dir.mkdir(parents=True, exist_ok=True)
             for f in Path(self.image_dir).glob("*"):
                 if f.suffix.lower() in (".jpg", ".jpeg", ".png", ".bmp"):
-                    import shutil
                     shutil.copy2(f, person_dir / f.name)
             self.log.emit(f"Importing {self.person_name}...")
             self.gallery.import_person(self.person_name, person_dir)
@@ -75,13 +72,21 @@ class GalleryPage(QWidget):
         layout.addWidget(TitleLabel("人员管理"))
 
         btn_row = QHBoxLayout()
-        self.add_btn = PushButton("添加人员", FluentIcon.ADD)
+        self.add_btn = PushButton()
+        self.add_btn.setText("添加人员")
+        self.add_btn.setIcon(FluentIcon.ADD)
         self.add_btn.clicked.connect(self._add_person)
-        self.import_btn = PushButton("导入图片", FluentIcon.FOLDER)
+        self.import_btn = PushButton()
+        self.import_btn.setText("导入图片")
+        self.import_btn.setIcon(FluentIcon.FOLDER)
         self.import_btn.clicked.connect(self._import_images)
-        self.delete_btn = PushButton("删除选中", FluentIcon.DELETE)
+        self.delete_btn = PushButton()
+        self.delete_btn.setText("删除选中")
+        self.delete_btn.setIcon(FluentIcon.DELETE)
         self.delete_btn.clicked.connect(self._delete_person)
-        self.rebuild_btn = PrimaryPushButton("重建特征库", FluentIcon.SYNC)
+        self.rebuild_btn = PrimaryPushButton()
+        self.rebuild_btn.setText("重建特征库")
+        self.rebuild_btn.setIcon(FluentIcon.SYNC)
         self.rebuild_btn.clicked.connect(self._rebuild_gallery)
         btn_row.addWidget(self.add_btn)
         btn_row.addWidget(self.import_btn)
@@ -164,7 +169,6 @@ class GalleryPage(QWidget):
             db.close()
             person_dir = RAW_DIR / name
             patches_dir = PATCHES_DIR / name
-            import shutil
             if person_dir.exists():
                 shutil.rmtree(person_dir)
             if patches_dir.exists():
