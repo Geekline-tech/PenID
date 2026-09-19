@@ -85,7 +85,8 @@ class TrainPage(QWidget):
         ]:
             col = QVBoxLayout()
             col.addWidget(CaptionLabel(label))
-            edit = LineEdit(default)
+            edit = LineEdit()
+            edit.setText(default)
             edit.setFixedWidth(100)
             self.inputs[key] = edit
             col.addWidget(edit)
